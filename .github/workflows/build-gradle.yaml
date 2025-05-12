@@ -11,6 +11,10 @@ on:
         required: false
         type: string
         default: "./build/libs"
+      upload-jar:
+        required: false
+        type: boolean
+        default: true
 
 jobs:
   build:
@@ -44,6 +48,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: ./gradlew sonar
       - name: Upload app jar
+        if: ${{ inputs.upload-jar }}
         uses: actions/upload-artifact@v4
         with:
           name: app-jar
