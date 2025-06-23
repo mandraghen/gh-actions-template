@@ -1,0 +1,36 @@
+name: Promote
+run-name: "Promote tag: ${{ github.sha }} to env: ${{ inputs.environment }}"
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Environment Name'
+        required: true
+        type: string
+      app-name:
+        description: 'Application Name'
+        required: true
+        type: string
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout GitOps repo
+        uses: actions/checkout@v4
+        with:
+          repository: mandraghen/k8s-infrastructure
+          token: ${{ secrets.CI_GITHUB_TOKEN }}
+          ref: main
+
+      - name: Update Chart Values
+        run: yq --inplace '.image.tag = "sha-${{ github.sha }}"' infra/envs/${{ inputs.environment }}/apps/${{ inputs.app-name }}/helm/values.yaml
+
+      - name: Push changes
+        run: |
+          git config --global user.name 'mandraghen Bot'
+          git config --global user.email 'mrb.salvatore@gmail.com'
+          git commit -am "[CI] Promote image tag ${{ github.sha }} to environment ${{ inputs.environment }}"
+          git push
